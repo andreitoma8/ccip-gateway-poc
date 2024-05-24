@@ -5,6 +5,8 @@ import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/
 import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
 import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
 
+import "hardhat/console.sol";
+
 contract GatewayB is CCIPReceiver {
     string public data = "Empty message";
 
@@ -13,7 +15,7 @@ contract GatewayB is CCIPReceiver {
     function _ccipReceive(
         Client.Any2EVMMessage memory incomingMessage
     ) internal override {
-        data = string(incomingMessage.data);
+        data = abi.decode(incomingMessage.data, (string));
 
         Client.EVM2AnyMessage memory outgoingMessage = Client.EVM2AnyMessage({
             receiver: incomingMessage.sender,
@@ -21,7 +23,7 @@ contract GatewayB is CCIPReceiver {
             tokenAmounts: new Client.EVMTokenAmount[](0),
             feeToken: address(0),
             extraArgs: Client._argsToBytes(
-                Client.EVMExtraArgsV1({gasLimit: 200000})
+                Client.EVMExtraArgsV1({gasLimit: 1000000})
             )
         });
 
@@ -37,4 +39,6 @@ contract GatewayB is CCIPReceiver {
             outgoingMessage
         );
     }
+
+    receive() external payable {}
 }

@@ -1,5 +1,3 @@
-// import { GatewayA, GatewayA__factory, GatewayB, GatewayB__factory } from "../typechain-types";
-import { Signer } from "ethers";
 import { Contract, ContractFactory } from "ethers";
 import { ethers } from "hardhat";
 
@@ -19,11 +17,10 @@ describe("CrossChainFlow", function () {
     let gatewayA: Contract;
     let gatewayB: Contract;
     let config: Config;
-    let deployer: Signer;
+    let deployer;
 
     before(async function () {
-        const signers = await ethers.getSigners();
-        deployer = signers.at(0)!;
+        [deployer] = await ethers.getSigners();
 
         const localSimulatorFactory = await ethers.getContractFactory("CCIPLocalSimulator");
         const localSimulator = await localSimulatorFactory.deploy();
@@ -32,15 +29,16 @@ describe("CrossChainFlow", function () {
 
         const GatewayAFactory = await ethers.getContractFactory("GatewayA");
         gatewayA = await GatewayAFactory.deploy(config.sourceRouter_);
+        console.log("GatewayA address: ", gatewayA.address);
 
         // fund the GatewayA contract with native coin
-        await deployer.sendTransaction({ to: gatewayA.getAddress(), value: ONE_ETHER });
+        await deployer.sendTransaction({ to: gatewayA.address, value: ONE_ETHER });
 
         const GatewayBFactory = await ethers.getContractFactory("GatewayB");
         gatewayB = await GatewayBFactory.deploy(config.destinationRouter_);
 
         // fund the GatewayB contract with native coin
-        await deployer.sendTransaction({ to: gatewayB.getAddress(), value: ONE_ETHER });
+        await deployer.sendTransaction({ to: gatewayB.address, value: ONE_ETHER });
     });
 
     it("should be able to send a message from GatewayA to GatewayB", async function () {
@@ -51,7 +49,7 @@ describe("CrossChainFlow", function () {
         const message = "2-10";
 
         // start the flow
-        await gatewayA.sendMessage(message);
+        await gatewayA.sendMessage(config.chainSelector_, gatewayB.address, message);
 
         console.log("After the flow");
         console.log("GatewayA data: ", await gatewayA.data());
