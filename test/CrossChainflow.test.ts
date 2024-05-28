@@ -11,7 +11,16 @@ interface Config {
     ccipLnM_: string;
 }
 
+// Define your PayFeesIn enum
+enum PayFeesIn {
+    Native = 0,
+    LINK = 1,
+}
+
 const ONE_ETHER = BigInt("1000000000000000000");
+const TEN_LINK = BigInt("10000000000000000000");
+
+const payFeesInLink: boolean = true;
 
 describe("CrossChainFlow", function () {
     let gatewayA: Contract;
@@ -28,17 +37,23 @@ describe("CrossChainFlow", function () {
         config = await localSimulator.configuration();
 
         const GatewayAFactory = await ethers.getContractFactory("GatewayA");
-        gatewayA = await GatewayAFactory.deploy(config.sourceRouter_);
-        console.log("GatewayA address: ", gatewayA.address);
+        gatewayA = await GatewayAFactory.deploy(config.sourceRouter_, config.linkToken_);
 
-        // fund the GatewayA contract with native coin
-        await deployer.sendTransaction({ to: gatewayA.address, value: ONE_ETHER });
+        // fund the GatewayA contract with native coin or link token
+        payFeesInLink
+            ? await localSimulator.requestLinkFromFaucet(gatewayA.address, TEN_LINK)
+            : await deployer.sendTransaction({ to: gatewayA.address, value: ONE_ETHER });
 
         const GatewayBFactory = await ethers.getContractFactory("GatewayB");
-        gatewayB = await GatewayBFactory.deploy(config.destinationRouter_);
+        gatewayB = await GatewayBFactory.deploy(config.destinationRouter_, config.linkToken_);
+        if (payFeesInLink) {
+            gatewayB.setFeeType(PayFeesIn.LINK);
+        }
 
-        // fund the GatewayB contract with native coin
-        await deployer.sendTransaction({ to: gatewayB.address, value: ONE_ETHER });
+        // fund the GatewayB contract with native coin or link token
+        payFeesInLink
+            ? await localSimulator.requestLinkFromFaucet(gatewayB.address, TEN_LINK)
+            : await deployer.sendTransaction({ to: gatewayB.address, value: ONE_ETHER });
     });
 
     it("should be able to send a message from GatewayA to GatewayB", async function () {
@@ -47,9 +62,10 @@ describe("CrossChainFlow", function () {
         console.log("GatewayB data: ", await gatewayB.data());
 
         const message = "2-10";
+        const payFeesIn = payFeesInLink ? PayFeesIn.LINK : PayFeesIn.Native;
 
         // start the flow
-        await gatewayA.sendMessage(config.chainSelector_, gatewayB.address, message);
+        await gatewayA.sendMessage(config.chainSelector_, gatewayB.address, message, payFeesIn);
 
         console.log("After the flow");
         console.log("GatewayA data: ", await gatewayA.data());
