@@ -1,13 +1,20 @@
-# Sample Hardhat Project
+# CCIP Libre PoC
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.
+This project demonstrates a flow for the Libre Gateway, using CCIP to test and demo the two-way cross-chain call that Libre needs to implement the gateway: Mainnet/L2 → Libre Chain → Mainnet/L2.
 
-Try running some of the following tasks:
+## Prerequisites
 
-```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat ignition deploy ./ignition/modules/Lock.ts
+-   Node.js
+-   Yarn
+
+## Installation
+
+```bash
+yarn
+```
+
+## Run test
+
+```bash
+yarn hardhat test test/CrossChainFlow.ts
 ```
