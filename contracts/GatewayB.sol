@@ -23,7 +23,7 @@ contract GatewayB is CCIPReceiver {
             tokenAmounts: new Client.EVMTokenAmount[](0),
             feeToken: address(0),
             extraArgs: Client._argsToBytes(
-                Client.EVMExtraArgsV1({gasLimit: 1000000})
+                Client.EVMExtraArgsV1({gasLimit: 500000})
             )
         });
 
